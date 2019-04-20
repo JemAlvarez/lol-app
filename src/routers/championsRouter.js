@@ -5,6 +5,7 @@ const fetch = require('node-fetch')
 const sharp = require('sharp')
 const getAllChampsArray = require('../utils/getAllChampsArray')
 const randomSplashArt = require('../utils/randomSplashArt')
+const getChampionById = require('../utils/getChampionById')
 
 const fetchOptions = {
     method: 'GET',
@@ -14,43 +15,51 @@ const fetchOptions = {
 }
 
 // All champions array
-router.get('/champions', (req, res) => {
+router.get('/champions', async (req, res) => {
     try {
-        getAllChampsArray().then(champions => res.send(champions))
+        const champions = await getAllChampsArray()
+        res.send(champions)
     } catch (e) {
         res.status(400).send()
     }
 })
 
 // Free champions rotation for new and old players
-router.get('/rotation', (req, res) => {
+router.get('/rotation', async (req, res) => {
     try {
-        fetch('https://na1.api.riotgames.com/lol/platform/v3/champion-rotations', fetchOptions)
-            .then(res => res.json())
-            .then(data => {
-                let rotation = {
-                    oldPlayers: [],
-                    newPlayers: [],
-                    newPlayersLevel: data.maxNewPlayerLevel
-                }
-                getAllChampsArray().then(champions => {
-                    data.freeChampionIds.forEach(id => {
-                        const found = champions.find(champ => champ.champId === `${id}`)
-                        delete found.title
-                        delete found.desc
-                        delete found.role
-                        rotation.oldPlayers.push(found)
-                    })
-                    data.freeChampionIdsForNewPlayers.forEach(id => {
-                        const found = champions.find(champ => champ.champId === `${id}`)
-                        delete found.title
-                        delete found.desc
-                        delete found.role
-                        rotation.newPlayers.push(found)
-                    })
-                    res.send(rotation)
-                })
-            })
+        const response = await fetch('https://na1.api.riotgames.com/lol/platform/v3/champion-rotations', fetchOptions)
+        const data = await response.json()
+        let rotation = {
+            oldPlayers: [],
+            newPlayers: [],
+            newPlayersLevel: data.maxNewPlayerLevel
+        }
+        const champions = await getAllChampsArray()
+        data.freeChampionIds.forEach(id => {
+            const found = champions.find(champ => champ.champId === `${id}`)
+            delete found.title
+            delete found.desc
+            delete found.role
+            rotation.oldPlayers.push(found)
+        })
+        data.freeChampionIdsForNewPlayers.forEach(id => {
+            const found = champions.find(champ => champ.champId === `${id}`)
+            delete found.title
+            delete found.desc
+            delete found.role
+            rotation.newPlayers.push(found)
+        })
+        res.send(rotation)
+    } catch (e) {
+        res.status(400).send()
+    }
+})
+
+// Get champion by id
+router.get('/champion/:id', async (req, res) => {
+    try {
+        const champion = await getChampionById(req.params.id)
+        res.send(champion)
     } catch (e) {
         res.status(400).send()
     }
@@ -66,12 +75,11 @@ router.get('/splashart', (req, res) => {
 })
 
 // Random champion selector
-router.get('/random-champion', (req, res) => {
+router.get('/random-champion', async (req, res) => {
     try {
-        getAllChampsArray().then(champions => {
-            const item = champions[Math.floor(Math.random() * champions.length)]
-            res.send(item)
-        })
+        const champions = await getAllChampsArray()
+        const item = champions[Math.floor(Math.random() * champions.length)]
+        res.send(item)
     } catch (e) {
         res.status(400).send()
     }
