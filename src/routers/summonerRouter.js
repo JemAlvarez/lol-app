@@ -104,7 +104,7 @@ router.get('/match/:region/:summoner/:id', async (req, res) => {
             tripleKills: participant.stats.tripleKills,
             quadraKills: participant.stats.quadraKills,
             pentaKills: participant.stats.pentaKills,
-            damageDealt: participant.stats.totalDamageDealt,
+            totalDamageDealtToChampions: participant.stats.totalDamageDealtToChampions,
             visionScore: participant.stats.visionScore,
             gold: participant.stats.goldEarned,
             cs: participant.stats.totalMinionsKilled,
