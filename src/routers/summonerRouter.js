@@ -107,7 +107,7 @@ router.get('/match/:region/:summoner/:id', async (req, res) => {
             totalDamageDealtToChampions: participant.stats.totalDamageDealtToChampions,
             visionScore: participant.stats.visionScore,
             gold: participant.stats.goldEarned,
-            cs: participant.stats.totalMinionsKilled,
+            cs: participant.stats.totalMinionsKilled + participant.stats.neutralMinionsKilled,
             champLevel: participant.stats.champLevel,
             firstBlood: participant.stats.firstBloodKill,
             players: participantsArr
