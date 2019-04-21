@@ -1,6 +1,7 @@
 const express = require('express')
 const router = new express.Router()
 const fetch = require('node-fetch')
+const getSummonerSpellsArr = require('../utils/getSummonerSpellsArr')
 
 const fetchOptions = {
     method: 'GET',
@@ -45,15 +46,23 @@ router.get('/summoner/:region/:name', async (req, res) => {
             delete game.role
             delete game.lane
         })
+        let ranked = {}
+        if (rankedStatsData[0]) {
+            ranked = {
+                ...rankedStatsData[0],
+                winPercent: Math.round((rankedStatsData[0].wins / (rankedStatsData[0].wins + rankedStatsData[0].losses)) * 100),
+                rankImg: `${process.env.URL}/img/ranks/${rankedStatsData[0].tier.toLowerCase()}`
+            }
+        }
         summoner = {
             id: summonerData.id,
             accountId: summonerData.accountId,
             name: summonerData.name,
-            icon: `http://ddragon.leagueoflegends.com/cdn/9.8.1/img/profileicon/${summonerData.profileIconId}.png`,
+            icon: `http://ddragon.leagueoflegends.com/cdn/${process.env.VERSION}/img/profileicon/${summonerData.profileIconId}.png`,
             level: summonerData.summonerLevel,
             championMastery: champMasteryData,
             totalMasteryScore: totalMasteryData,
-            ranked: rankedStatsData[0],
+            ranked: ranked,
             matchHistory: matchHistoryData
         }
         res.send(summoner)
@@ -62,19 +71,48 @@ router.get('/summoner/:region/:name', async (req, res) => {
     }
 })
 
-router.get('/match/:region/:id', async (req, res) => {
+router.get('/match/:region/:summoner/:id', async (req, res) => {
     try {
+        const spells = await getSummonerSpellsArr()
         const response = await fetch(`https://${req.params.region}.api.riotgames.com/lol/match/v4/matches/${req.params.id}`, fetchOptions)
         const data = await response.json()
-        let game = {
+        const participantIdentity = data.participantIdentities.find(participant => participant.player.summonerName.toLowerCase() === req.params.summoner)
+        const participant = data.participants.find(participant => participant.participantId === participantIdentity.participantId)
+        let participantsArr = []
+        data.participantIdentities.forEach(part => {
+            participantsArr.push({
+                summoner: part.player.summonerName,
+                icon: `http://ddragon.leagueoflegends.com/cdn/${process.env.VERSION}/img/profileicon/${part.player.profileIcon}.png`
+            })
+        })
+        const spell1 = spells.find(spell => spell.key === `${participant.spell1Id}`)
+        const spell2 = spells.find(spell => spell.key === `${participant.spell2Id}`)
+        const game = {
             gameId: data.gameId,
             date: data.gameCreation,
             duration: data.gameDuration,
-            map: `http://ddragon.leagueoflegends.com/cdn/9.8.1/img/map/map${data.mapId}.png`,
-            gameMode: data.gameMode
+            map: `http://ddragon.leagueoflegends.com/cdn/${process.env.VERSION}/img/map/map${data.mapId}.png`,
+            gameMode: data.gameMode,
+            spell1,
+            spell2,
+            team: participant.teamId,
+            champion: participant.championId,
+            win: participant.stats.win,
+            k: participant.stats.kills,
+            d: participant.stats.deaths,
+            a: participant.stats.assists,
+            tripleKills: participant.stats.tripleKills,
+            quadraKills: participant.stats.quadraKills,
+            pentaKills: participant.stats.pentaKills,
+            damageDealt: participant.stats.totalDamageDealt,
+            visionScore: participant.stats.visionScore,
+            gold: participant.stats.goldEarned,
+            cs: participant.stats.totalMinionsKilled,
+            champLevel: participant.stats.champLevel,
+            firstBlood: participant.stats.firstBloodKill,
+            players: participantsArr
         }
-        // check if won?
-        res.send(data)
+        res.send(game)
     } catch (e) {
         res.status(400).send()
     }

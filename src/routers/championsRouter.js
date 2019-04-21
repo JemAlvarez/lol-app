@@ -92,7 +92,7 @@ router.get('/random-lane', (req, res) => {
         const lane = lanes[Math.floor(Math.random() * lanes.length)]
         res.send({
             lane,
-            img: `localhost:3000/img/positions/${lane}`
+            img: `${process.env.URL}/img/positions/${lane}`
         })
     } catch (e) {
         res.status(400).send()

@@ -1,7 +1,7 @@
 const fetch = require('node-fetch')
 
 const getAllChampsArray = () => {
-    const champs = fetch('http://ddragon.leagueoflegends.com/cdn/9.8.1/data/en_US/champion.json')
+    const champs = fetch(`http://ddragon.leagueoflegends.com/cdn/${process.env.VERSION}/data/en_US/champion.json`)
         .then(res => res.json())
         .then(async (data) => {
             let champions = []
@@ -14,7 +14,7 @@ const getAllChampsArray = () => {
                     title: obj.title,
                     desc: obj.blurb,
                     role: obj.tags,
-                    icon: `http://ddragon.leagueoflegends.com/cdn/9.8.1/img/champion/${obj.name.replace(' ', '')}.png`,
+                    icon: `http://ddragon.leagueoflegends.com/cdn/${process.env.VERSION}/img/champion/${obj.name.replace(' ', '')}.png`,
                     loadingImg: `http://ddragon.leagueoflegends.com/cdn/img/champion/loading/${obj.name.replace(' ', '')}_0.jpg`,
                     splashImg: `http://ddragon.leagueoflegends.com/cdn/img/champion/splash/${obj.name.replace(' ', '')}_0.jpg`
                 }
