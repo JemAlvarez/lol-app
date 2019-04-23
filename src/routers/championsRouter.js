@@ -4,7 +4,7 @@ const router = new express.Router()
 const fetch = require('node-fetch')
 const sharp = require('sharp')
 const getAllChampsArray = require('../utils/getAllChampsArray')
-const { randomSplashArt } = require('../utils/randomSplashArt')
+const randomSplashArt = require('../utils/randomSplashArt')
 const getChampionById = require('../utils/getChampionById')
 
 const fetchOptions = {
