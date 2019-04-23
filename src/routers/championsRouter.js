@@ -68,7 +68,10 @@ router.get('/champion/:id', async (req, res) => {
 // Random splashart everyday
 router.get('/splashart', (req, res) => {
     try {
-        res.send(randomSplashArt())
+        getAllChampsArray().then(champions => {
+            const item = champions[Math.floor(Math.random() * champions.length)]
+            res.send({ splashArt: item.splashImg })
+        })
     } catch (e) {
         res.status(400).send()
     }
