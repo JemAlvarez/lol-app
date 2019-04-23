@@ -2,7 +2,7 @@ const express = require('express')
 const cors = require('cors')
 const championsRouter = require('./routers/championsRouter')
 const summonerRouter = require('./routers/summonerRouter')
-require('./utils/randomSplashArt')
+// require('./utils/randomSplashArt')
 
 const app = express()
 app.use(cors())
