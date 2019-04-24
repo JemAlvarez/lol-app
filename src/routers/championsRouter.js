@@ -4,7 +4,6 @@ const router = new express.Router()
 const fetch = require('node-fetch')
 const sharp = require('sharp')
 const getAllChampsArray = require('../utils/getAllChampsArray')
-const randomSplashArt = require('../utils/randomSplashArt')
 const getChampionById = require('../utils/getChampionById')
 
 const fetchOptions = {
@@ -92,10 +91,20 @@ router.get('/random-champion', async (req, res) => {
 router.get('/random-lane', (req, res) => {
     try {
         const lanes = ['bot', 'jungle', 'mid', 'support', 'top']
-        const lane = lanes[Math.floor(Math.random() * lanes.length)]
+        const lane1 = lanes[Math.floor(Math.random() * lanes.length)]
+        let lane2 = lanes[Math.floor(Math.random() * lanes.length)]
+        while (lane2 === lane1) {
+            lane2 = lanes[Math.floor(Math.random() * lanes.length)]
+        }
         res.send({
-            lane,
-            img: `${process.env.URL}/img/positions/${lane}`
+            primary: {
+                lane1,
+                img: `${process.env.URL}/img/positions/${lane1}`
+            },
+            secondary: {
+                lane2,
+                img: `${process.env.URL}/img/positions/${lane2}`
+            }
         })
     } catch (e) {
         res.status(400).send()

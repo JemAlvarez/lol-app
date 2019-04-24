@@ -2,6 +2,7 @@ const express = require('express')
 const router = new express.Router()
 const fetch = require('node-fetch')
 const getSummonerSpellsArr = require('../utils/getSummonerSpellsArr')
+const getChampionById = require('../utils/getChampionById')
 
 const fetchOptions = {
     method: 'GET',
@@ -25,12 +26,13 @@ router.get('/summoner/:region/:name', async (req, res) => {
         let champMasteryData = await champMasteryResponse.json()
         matchHistoryData = matchHistoryData.matches.slice(0, 10)
         champMasteryData = champMasteryData.slice(0, 5)
-        champMasteryData.forEach(champ => {
+        champMasteryData.forEach(async (champ) => {
             delete champ.championPointsSinceLastLevel
             delete champ.championPointsUntilNextLevel
             delete champ.chestGranted
             delete champ.tokensEarned
             delete champ.summonerId
+            champ.champion = `${process.env.URL}/champion/${champ.championId}`
         })
         rankedStatsData.forEach(item => {
             delete item.summonerId
@@ -59,6 +61,7 @@ router.get('/summoner/:region/:name', async (req, res) => {
             accountId: summonerData.accountId,
             name: summonerData.name,
             icon: `http://ddragon.leagueoflegends.com/cdn/${process.env.VERSION}/img/profileicon/${summonerData.profileIconId}.png`,
+            border: `https://opgg-static.akamaized.net/images/borders2/${ranked.tier.toLowerCase()}.png`,
             level: summonerData.summonerLevel,
             championMastery: champMasteryData,
             totalMasteryScore: totalMasteryData,
@@ -96,8 +99,10 @@ router.get('/match/:region/:summoner/:id', async (req, res) => {
             spell1,
             spell2,
             team: participant.teamId,
-            champion: participant.championId,
-            win: participant.stats.win,
+            teamColor: participant.teamId === 100 ? 'blue' : 'red',
+            championId: participant.championId,
+            champion: `${process.env.URL}/champion/${participant.championId}`,
+            win: data.gameDuration < 300 ? null : participant.stats.win,
             k: participant.stats.kills,
             d: participant.stats.deaths,
             a: participant.stats.assists,
