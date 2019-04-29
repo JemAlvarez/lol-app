@@ -26,13 +26,13 @@ router.get('/summoner/:region/:name', async (req, res) => {
         let champMasteryData = await champMasteryResponse.json()
         matchHistoryData = matchHistoryData.matches.slice(0, 10)
         champMasteryData = champMasteryData.slice(0, 5)
-        champMasteryData.forEach(async (champ) => {
+        await champMasteryData.forEach(async (champ) => {
             delete champ.championPointsSinceLastLevel
             delete champ.championPointsUntilNextLevel
             delete champ.chestGranted
             delete champ.tokensEarned
             delete champ.summonerId
-            champ.champion = `${process.env.URL}/champion/${champ.championId}`
+            // champ.champion = await getChampionById(champ.championId) ---- MAYBE
         })
         rankedStatsData.forEach(item => {
             delete item.summonerId
@@ -101,7 +101,7 @@ router.get('/match/:region/:summoner/:id', async (req, res) => {
             team: participant.teamId,
             teamColor: participant.teamId === 100 ? 'blue' : 'red',
             championId: participant.championId,
-            champion: `${process.env.URL}/champion/${participant.championId}`,
+            champion: await getChampionById(participant.championId),
             win: data.gameDuration < 300 ? null : participant.stats.win,
             k: participant.stats.kills,
             d: participant.stats.deaths,

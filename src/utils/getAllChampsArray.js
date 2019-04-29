@@ -13,9 +13,9 @@ const getAllChampsArray = async () => {
             title: obj.title,
             desc: obj.blurb,
             role: obj.tags,
-            icon: `http://ddragon.leagueoflegends.com/cdn/${process.env.VERSION}/img/champion/${obj.name.replace(' ', '')}.png`,
-            loadingImg: `http://ddragon.leagueoflegends.com/cdn/img/champion/loading/${obj.name.replace(' ', '')}_0.jpg`,
-            splashImg: `http://ddragon.leagueoflegends.com/cdn/img/champion/splash/${obj.name.replace(' ', '')}_0.jpg`
+            icon: `http://ddragon.leagueoflegends.com/cdn/${process.env.VERSION}/img/champion/${obj.id}.png`,
+            loadingImg: `http://ddragon.leagueoflegends.com/cdn/img/champion/loading/${obj.id}_0.jpg`,
+            splashImg: `http://ddragon.leagueoflegends.com/cdn/img/champion/splash/${obj.id}_0.jpg`
         }
         champions.push(champ)
     })
