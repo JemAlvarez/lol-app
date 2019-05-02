@@ -18,6 +18,7 @@ app.get('/', (req, res) => {
         randomSplashArt: '/splashart',
         randomLane: '/random-lane',
         randomChampion: '/random-champion',
+        randomSkin: '/random-skin/:champion',
         freeChampRotation: '/rotation',
         images: '/img/:folder/:name'
     })

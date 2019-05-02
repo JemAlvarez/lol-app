@@ -9,6 +9,7 @@ const getAllChampsArray = async () => {
         const obj = champs[val]
         const champ = {
             name: obj.name,
+            idName: obj.id,
             champId: obj.key,
             title: obj.title,
             desc: obj.blurb,
