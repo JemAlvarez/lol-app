@@ -122,4 +122,19 @@ router.get('/img/:folder/:name', async (req, res) => {
     }
 })
 
+// Champion Skin random
+router.get('/random-skin/:champion', async (req, res) => {
+    try {
+        const champion = req.params.champion
+        const champRes = await fetch(`http://ddragon.leagueoflegends.com/cdn/${process.env.VERSION}/data/en_US/champion/${champion}.json`)
+        const champData = await champRes.json()
+        const skins = champData.data[champion].skins
+        let randomSkin = skins[Math.floor(Math.random() * skins.length)]
+        randomSkin.splashArt = `http://ddragon.leagueoflegends.com/cdn/img/champion/splash/${champion}_${randomSkin.num}.jpg`
+        res.send(randomSkin)
+    } catch (e) {
+        res.status(400).send()
+    }
+})
+
 module.exports = router
