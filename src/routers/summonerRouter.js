@@ -14,6 +14,7 @@ const fetchOptions = {
 router.get('/summoner/:region/:name', async (req, res) => {
     try {
         let summoner = {}
+        let masteryChamps = []
         const summonerResponse = await fetch(`https://${req.params.region}.api.riotgames.com/lol/summoner/v4/summoners/by-name/${req.params.name}`, fetchOptions)
         const summonerData = await summonerResponse.json()
         const champMasteryResponse = await fetch(`https://${req.params.region}.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-summoner/${summonerData.id}`, fetchOptions)
@@ -26,14 +27,29 @@ router.get('/summoner/:region/:name', async (req, res) => {
         let champMasteryData = await champMasteryResponse.json()
         matchHistoryData = matchHistoryData.matches.slice(0, 10)
         champMasteryData = champMasteryData.slice(0, 5)
-        await champMasteryData.forEach(async (champ) => {
+        champMasteryData.forEach(champ => {
             delete champ.championPointsSinceLastLevel
             delete champ.championPointsUntilNextLevel
             delete champ.chestGranted
             delete champ.tokensEarned
             delete champ.summonerId
-            // champ.champion = await getChampionById(champ.championId) ---- MAYBE
         })
+        await Promise.all(champMasteryData.map(async champ => {
+            const champion = await getChampionById(champ.championId)
+            delete champion.idName
+            delete champion.title
+            delete champion.desc
+            delete champion.desc
+            delete champion.role
+            delete champion.loadingImg
+            delete champion.splashImg
+            masteryChamps.push({
+                ...champion,
+                championLevel: champ.championLevel,
+                championPoints: champ.championPoints,
+                lastPlayTime: champ.lastPlayTime
+            })
+        }))
         rankedStatsData.forEach(item => {
             delete item.summonerId
             delete item.summonerName
@@ -63,7 +79,7 @@ router.get('/summoner/:region/:name', async (req, res) => {
             icon: `http://ddragon.leagueoflegends.com/cdn/${process.env.VERSION}/img/profileicon/${summonerData.profileIconId}.png`,
             border: `https://opgg-static.akamaized.net/images/borders2/${ranked.tier.toLowerCase()}.png`,
             level: summonerData.summonerLevel,
-            championMastery: champMasteryData,
+            championMastery: masteryChamps,
             totalMasteryScore: totalMasteryData,
             ranked: ranked,
             matchHistory: matchHistoryData
