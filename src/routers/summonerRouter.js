@@ -1,8 +1,8 @@
 const express = require('express')
 const router = new express.Router()
 const fetch = require('node-fetch')
-const getSummonerSpellsArr = require('../utils/getSummonerSpellsArr')
 const getChampionById = require('../utils/getChampionById')
+const getMatchById = require('../utils/getMatchById')
 
 const fetchOptions = {
     method: 'GET',
@@ -15,6 +15,7 @@ router.get('/summoner/:region/:name', async (req, res) => {
     try {
         let summoner = {}
         let masteryChamps = []
+        let matchHistory = []
         const summonerResponse = await fetch(`https://${req.params.region}.api.riotgames.com/lol/summoner/v4/summoners/by-name/${req.params.name}`, fetchOptions)
         const summonerData = await summonerResponse.json()
         const champMasteryResponse = await fetch(`https://${req.params.region}.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-summoner/${summonerData.id}`, fetchOptions)
@@ -64,12 +65,25 @@ router.get('/summoner/:region/:name', async (req, res) => {
             delete game.role
             delete game.lane
         })
+        await Promise.all(matchHistoryData.map(async game => {
+            const match = await getMatchById(req.params.region, req.params.name, game.gameId)
+            matchHistory.push({
+                ...game,
+                ...match
+            })
+        }))
         let ranked = {}
         if (rankedStatsData[0]) {
             ranked = {
                 ...rankedStatsData[0],
                 winPercent: Math.round((rankedStatsData[0].wins / (rankedStatsData[0].wins + rankedStatsData[0].losses)) * 100),
-                rankImg: `${process.env.URL}/img/ranks/${rankedStatsData[0].tier.toLowerCase()}`
+                rankImg: `${process.env.URL}/img/ranks/${rankedStatsData[0].tier.toLowerCase()}`,
+                border: `https://opgg-static.akamaized.net/images/borders2/${rankedStatsData[0].tier.toLowerCase()}.png`
+            }
+        } else {
+            ranked = {
+                tier: 'UNRANKED',
+                rankImg: `${process.env.URL}/img/ranks/unranked`
             }
         }
         summoner = {
@@ -77,12 +91,11 @@ router.get('/summoner/:region/:name', async (req, res) => {
             accountId: summonerData.accountId,
             name: summonerData.name,
             icon: `http://ddragon.leagueoflegends.com/cdn/${process.env.VERSION}/img/profileicon/${summonerData.profileIconId}.png`,
-            border: `https://opgg-static.akamaized.net/images/borders2/${ranked.tier.toLowerCase()}.png`,
             level: summonerData.summonerLevel,
             championMastery: masteryChamps,
             totalMasteryScore: totalMasteryData,
             ranked: ranked,
-            matchHistory: matchHistoryData
+            matchHistory: matchHistory
         }
         res.send(summoner)
     } catch (e) {
@@ -92,47 +105,7 @@ router.get('/summoner/:region/:name', async (req, res) => {
 
 router.get('/match/:region/:summoner/:id', async (req, res) => {
     try {
-        const spells = await getSummonerSpellsArr()
-        const response = await fetch(`https://${req.params.region}.api.riotgames.com/lol/match/v4/matches/${req.params.id}`, fetchOptions)
-        const data = await response.json()
-        const participantIdentity = data.participantIdentities.find(participant => participant.player.summonerName.toLowerCase() === req.params.summoner)
-        const participant = data.participants.find(participant => participant.participantId === participantIdentity.participantId)
-        let participantsArr = []
-        data.participantIdentities.forEach(part => {
-            participantsArr.push({
-                summoner: part.player.summonerName,
-                icon: `http://ddragon.leagueoflegends.com/cdn/${process.env.VERSION}/img/profileicon/${part.player.profileIcon}.png`
-            })
-        })
-        const spell1 = spells.find(spell => spell.key === `${participant.spell1Id}`)
-        const spell2 = spells.find(spell => spell.key === `${participant.spell2Id}`)
-        const game = {
-            gameId: data.gameId,
-            date: data.gameCreation,
-            duration: data.gameDuration,
-            map: `http://ddragon.leagueoflegends.com/cdn/${process.env.VERSION}/img/map/map${data.mapId}.png`,
-            gameMode: data.gameMode,
-            spell1,
-            spell2,
-            team: participant.teamId,
-            teamColor: participant.teamId === 100 ? 'blue' : 'red',
-            championId: participant.championId,
-            champion: await getChampionById(participant.championId),
-            win: data.gameDuration < 300 ? null : participant.stats.win,
-            k: participant.stats.kills,
-            d: participant.stats.deaths,
-            a: participant.stats.assists,
-            tripleKills: participant.stats.tripleKills,
-            quadraKills: participant.stats.quadraKills,
-            pentaKills: participant.stats.pentaKills,
-            totalDamageDealtToChampions: participant.stats.totalDamageDealtToChampions,
-            visionScore: participant.stats.visionScore,
-            gold: participant.stats.goldEarned,
-            cs: participant.stats.totalMinionsKilled + participant.stats.neutralMinionsKilled,
-            champLevel: participant.stats.champLevel,
-            firstBlood: participant.stats.firstBloodKill,
-            players: participantsArr
-        }
+        const game = await getMatchById(req.params.region, req.params.summoner, req.params.id)
         res.send(game)
     } catch (e) {
         res.status(400).send()
